@@ -6,13 +6,15 @@ using Telegram.Bot;
 using Telegram.Bot.Args;
 using Newtonsoft.Json;
 using System.Linq;
+using Telegram.Bot.Requests.Abstractions;
+using ConsoleApp1;
 
-class Program
+public class BotLogic
 {
     private static readonly HttpClient client = new HttpClient();
     private static readonly TelegramBotClient bot = new TelegramBotClient("6500634051:AAFU_2CnX8GQIDTsnUYwe5QLC_LPsZBxC6o");
 
-    static void Main()
+    public void InitializeBot()
     {
         bot.OnMessage += Bot_OnMessage;
         bot.StartReceiving();
@@ -20,7 +22,7 @@ class Program
         bot.StopReceiving();
     }
 
-    private static async void Bot_OnMessage(object sender, MessageEventArgs e)
+    private async void Bot_OnMessage(object sender, MessageEventArgs e)
     {
         if (e.Message.Text != null)
         {
@@ -28,7 +30,7 @@ class Program
 
             if (e.Message.Text == "/get_currencies")
             {
-                string availableCurrencies = await GetAvailableCurrencies();
+                string availableCurrencies = await CurrencyService.GetAvailableCurrencies();
 
                 await bot.SendTextMessageAsync(chatId: e.Message.Chat, text: availableCurrencies);
                 return;
@@ -37,7 +39,7 @@ class Program
             if (e.Message.Text == "/start")
             {
                 await bot.SendTextMessageAsync(chatId: e.Message.Chat,
-                                                   text: "Hello! Please send a message in the format: <currency code> <date>. For example: USD 01.01.2022. The command to see a list of all currencies - /get_currencies");
+                                               text: "Hello! Please send a message in the format: <currency code> <date>. For example: USD 01.01.2022. The command to see a list of all currencies - /get_currencies");
                 return;
             }
 
@@ -89,40 +91,7 @@ class Program
     {
         try
         {
-            HttpResponseMessage response = await client.GetAsync($"https://api.privatbank.ua/p24api/exchange_rates?json&date={date}");
-            response.EnsureSuccessStatusCode();
-            string responseBody = await response.Content.ReadAsStringAsync();
-
-            dynamic data = JsonConvert.DeserializeObject(responseBody);
-
-            // Deserializing dynamic object to list of ExchangeRate
-            List<ExchangeRate> exchangeRates = JsonConvert.DeserializeObject<List<ExchangeRate>>(JsonConvert.SerializeObject(data.exchangeRate));
-
-            // 2. Validate the currency code
-            var targerCurrency = currencyCode;
-            Console.WriteLine(targerCurrency);
-            List<ExchangeRate> matchingCurrency = exchangeRates.FindAll(currency => currency.Currency == targerCurrency);
-
-            Console.WriteLine(matchingCurrency);
-            foreach (ExchangeRate c in matchingCurrency)
-            {
-                Console.WriteLine(c.SaleRateNB, c.Currency);
-                return c.SaleRateNB;
-            }
-
-            return null;
-        }
-        catch (HttpRequestException)
-        {
-            return "An error occurred while retrieving the exchange rate. Check the written currency code and date, then try again";
-        }
-    }
-
-    private static async Task<string> GetAvailableCurrencies()
-    {
-        try
-        {
-            HttpResponseMessage response = await client.GetAsync("https://api.privatbank.ua/p24api/exchange_rates?date=01.12.2014");
+            HttpResponseMessage response = await client.GetAsync($"https://api.privatbank.ua/p24api/exchange_rates?date={date}");
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
 
@@ -132,28 +101,22 @@ class Program
             // Deserialize exchangeRate to List<ExchangeRate>
             List<ExchangeRate> exchangeRates = JsonConvert.DeserializeObject<List<ExchangeRate>>(data.exchangeRate.ToString());
 
-            // Get all available currencies with LINQ
-            var availableCurrencies = exchangeRates.Select(r => r.Currency).Distinct();
+            // Get the exchange rate for the specified currency code
+            var exchangeRate = exchangeRates.FirstOrDefault(r => r.Currency == currencyCode);
 
-            // Construct response message
-            string message = "Available currencies are:";
-            foreach (var currency in availableCurrencies)
+            if (exchangeRate != null)
             {
-                message += "\n" + currency;
+                return exchangeRate.SaleRateNB;
             }
-
-            return message;
+            else
+            {
+                return null;
+            }
         }
         catch (HttpRequestException)
         {
-            return "An error occurred while retrieving the available currencies. Please try again later.";
+            return "An error occurred while retrieving the exchange rate. Please try again later.";
         }
     }
-
-
-    public class ExchangeRate
-    {
-        public string Currency { get; set; }
-        public string SaleRateNB { get; set; }
-    }
 }
+
