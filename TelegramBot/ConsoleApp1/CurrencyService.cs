@@ -6,7 +6,8 @@ public class CurrencyService
 {
     static string availableCurrenciesMessage = Resources.availableCurrenciesMessage;
     static string apiServiceFailMessage = Resources.apiServiceFailMessage;
-    private static readonly HttpClient client = new HttpClient();
+    static string exchangeRateAPIFailMessage = Resources.exchangeRateAPIFailMessage;
+
     private readonly HttpClient _client;
 
     public CurrencyService(HttpClient client)
@@ -18,7 +19,7 @@ public class CurrencyService
     {
         try
         {
-            HttpResponseMessage response = await client.GetAsync("https://api.privatbank.ua/p24api/exchange_rates?date=01.12.2014");
+            HttpResponseMessage response = await _client.GetAsync("https://api.privatbank.ua/p24api/exchange_rates?date=01.12.2014");
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
 
@@ -43,6 +44,38 @@ public class CurrencyService
         catch (HttpRequestException)
         {
             return apiServiceFailMessage;
+        }
+    }
+
+    public async Task<string> GetExchangeRates(string currencyCode, string date)
+    {
+        try
+        {
+            HttpResponseMessage response = await _client.GetAsync($"https://api.privatbank.ua/p24api/exchange_rates?date={date}");
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+
+            // Deserialize JSON response to dynamic object
+            dynamic data = JsonConvert.DeserializeObject(responseBody);
+
+            // Deserialize exchangeRate to List<ExchangeRate>
+            List<ExchangeRate> exchangeRates = JsonConvert.DeserializeObject<List<ExchangeRate>>(data.exchangeRate.ToString());
+
+            // Get the exchange rate for the specified currency code
+            var exchangeRate = exchangeRates.FirstOrDefault(r => r.Currency == currencyCode);
+
+            if (exchangeRate != null)
+            {
+                return exchangeRate.SaleRateNB;
+            }
+            else
+            {
+                return null;
+            }
+        }
+        catch (HttpRequestException)
+        {
+            return exchangeRateAPIFailMessage;
         }
     }
 }

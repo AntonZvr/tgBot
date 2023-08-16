@@ -14,20 +14,21 @@ public class BotLogic
     static string dateInvalidPeriodMessage = Resources.dateInvalidPeriodMessage;
     static string invalidCurrencyCodeMessage = Resources.invalidCurrencyCodeMessage;
     static string invalidFormatMessage = Resources.invalidFormatMessage;
-    static string exchangeRateAPIFailMessage = Resources.exchangeRateAPIFailMessage;
 
     private HttpClient httpClient;
     private static readonly HttpClient client = new HttpClient();
     private static readonly TelegramBotClient bot = new TelegramBotClient(Configuration.LoadConfiguration().BotToken);
+    private CurrencyService currencyService;
 
     public BotLogic(HttpClient httpClient)
     {
         this.httpClient = httpClient;
+        this.currencyService = new CurrencyService(httpClient);
     }
 
     public BotLogic()
     {
-       
+        this.currencyService = new CurrencyService(client);
     }
 
     public void InitializeBot()
@@ -40,7 +41,6 @@ public class BotLogic
 
     private async void Bot_OnMessage(object sender, MessageEventArgs e)
     {
-        CurrencyService currencyService = new CurrencyService(httpClient);
         if (e.Message.Text != null)
         {
             Console.WriteLine($"Received a text message in chat {e.Message.Chat.Id}.");
@@ -83,14 +83,14 @@ public class BotLogic
                     return;
                 }
 
-                string exchangeRate = await GetExchangeRates(currencyCode, date);
+                string exchangeRate = await currencyService.GetExchangeRates(currencyCode, date);
 
                 if (exchangeRate == null)
                 {
                     await bot.SendTextMessageAsync(chatId: e.Message.Chat,
                                                    text: invalidCurrencyCodeMessage);
                 }
-                else if (exchangeRate != null)
+                else
                 {
                     await bot.SendTextMessageAsync(chatId: e.Message.Chat,
                                                    text: $"The exchange rate for {currencyCode} on {date} was {exchangeRate}");
@@ -101,38 +101,6 @@ public class BotLogic
                 await bot.SendTextMessageAsync(chatId: e.Message.Chat,
                                                text: invalidFormatMessage);
             }
-        }
-    }
-
-    public async Task<string> GetExchangeRates(string currencyCode, string date)
-    {
-        try
-        {
-            HttpResponseMessage response = await client.GetAsync($"https://api.privatbank.ua/p24api/exchange_rates?date={date}");
-            response.EnsureSuccessStatusCode();
-            string responseBody = await response.Content.ReadAsStringAsync();
-
-            // Deserialize JSON response to dynamic object
-            dynamic data = JsonConvert.DeserializeObject(responseBody);
-
-            // Deserialize exchangeRate to List<ExchangeRate>
-            List<ExchangeRate> exchangeRates = JsonConvert.DeserializeObject<List<ExchangeRate>>(data.exchangeRate.ToString());
-
-            // Get the exchange rate for the specified currency code
-            var exchangeRate = exchangeRates.FirstOrDefault(r => r.Currency == currencyCode);
-
-            if (exchangeRate != null)
-            {
-                return exchangeRate.SaleRateNB;
-            }
-            else
-            {
-                return null;
-            }
-        }
-        catch (HttpRequestException)
-        {
-            return exchangeRateAPIFailMessage;
         }
     }
 }
