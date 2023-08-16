@@ -1,14 +1,8 @@
-﻿using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-using System.Globalization;
+﻿using System.Globalization;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Newtonsoft.Json;
-using System.Linq;
-using Telegram.Bot.Requests.Abstractions;
 using ConsoleApp1;
-using System.Resources;
 using ConsoleApp1.Properties;
 
 public class BotLogic
@@ -22,8 +16,20 @@ public class BotLogic
     static string invalidFormatMessage = Resources.invalidFormatMessage;
     static string exchangeRateAPIFailMessage = Resources.exchangeRateAPIFailMessage;
 
+    private HttpClient httpClient;
     private static readonly HttpClient client = new HttpClient();
     private static readonly TelegramBotClient bot = new TelegramBotClient(Configuration.LoadConfiguration().BotToken);
+
+    public BotLogic(HttpClient httpClient)
+    {
+        this.httpClient = httpClient;
+    }
+
+    public BotLogic()
+    {
+       
+    }
+
     public void InitializeBot()
     {
         bot.OnMessage += Bot_OnMessage;
@@ -34,13 +40,14 @@ public class BotLogic
 
     private async void Bot_OnMessage(object sender, MessageEventArgs e)
     {
+        CurrencyService currencyService = new CurrencyService(httpClient);
         if (e.Message.Text != null)
         {
             Console.WriteLine($"Received a text message in chat {e.Message.Chat.Id}.");
 
             if (e.Message.Text == getCurrenciesCommandString)
             {
-                string availableCurrencies = await CurrencyService.GetAvailableCurrencies();
+                string availableCurrencies = await currencyService.GetAvailableCurrencies();
 
                 await bot.SendTextMessageAsync(chatId: e.Message.Chat, text: availableCurrencies);
                 return;
@@ -76,7 +83,7 @@ public class BotLogic
                     return;
                 }
 
-                string exchangeRate = await GetExchangeRate(currencyCode, date);
+                string exchangeRate = await GetExchangeRates(currencyCode, date);
 
                 if (exchangeRate == null)
                 {
@@ -97,7 +104,7 @@ public class BotLogic
         }
     }
 
-    private static async Task<string> GetExchangeRate(string currencyCode, string date)
+    public async Task<string> GetExchangeRates(string currencyCode, string date)
     {
         try
         {

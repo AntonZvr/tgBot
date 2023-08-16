@@ -1,8 +1,4 @@
-﻿using System.Net.Http;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Newtonsoft.Json;
 using ConsoleApp1;
 using ConsoleApp1.Properties;
 
@@ -11,8 +7,14 @@ public class CurrencyService
     static string availableCurrenciesMessage = Resources.availableCurrenciesMessage;
     static string apiServiceFailMessage = Resources.apiServiceFailMessage;
     private static readonly HttpClient client = new HttpClient();
+    private readonly HttpClient _client;
 
-    public static async Task<string> GetAvailableCurrencies()
+    public CurrencyService(HttpClient client)
+    {
+        _client = client;
+    }
+
+    public async Task<string> GetAvailableCurrencies()
     {
         try
         {
