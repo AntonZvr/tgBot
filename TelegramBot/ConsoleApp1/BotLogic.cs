@@ -12,8 +12,7 @@ using ConsoleApp1;
 public class BotLogic
 {
     private static readonly HttpClient client = new HttpClient();
-    private static readonly TelegramBotClient bot = new TelegramBotClient("6500634051:AAFU_2CnX8GQIDTsnUYwe5QLC_LPsZBxC6o");
-
+    private static readonly TelegramBotClient bot = new TelegramBotClient(Configuration.LoadConfiguration().BotToken);
     public void InitializeBot()
     {
         bot.OnMessage += Bot_OnMessage;
