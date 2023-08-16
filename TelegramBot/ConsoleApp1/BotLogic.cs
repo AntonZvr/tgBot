@@ -8,9 +8,20 @@ using Newtonsoft.Json;
 using System.Linq;
 using Telegram.Bot.Requests.Abstractions;
 using ConsoleApp1;
+using System.Resources;
+using ConsoleApp1.Properties;
 
 public class BotLogic
 {
+    static string getCurrenciesCommandString = Resources.getCurrenciesCommandString;
+    static string startCommandString = Resources.startCommandString;
+    static string startMessage = Resources.startMessage;
+    static string dateInvalidMessage = Resources.dateInvalidMessage;
+    static string dateInvalidPeriodMessage = Resources.dateInvalidPeriodMessage;
+    static string invalidCurrencyCodeMessage = Resources.invalidCurrencyCodeMessage;
+    static string invalidFormatMessage = Resources.invalidFormatMessage;
+    static string exchangeRateAPIFailMessage = Resources.exchangeRateAPIFailMessage;
+
     private static readonly HttpClient client = new HttpClient();
     private static readonly TelegramBotClient bot = new TelegramBotClient(Configuration.LoadConfiguration().BotToken);
     public void InitializeBot()
@@ -27,7 +38,7 @@ public class BotLogic
         {
             Console.WriteLine($"Received a text message in chat {e.Message.Chat.Id}.");
 
-            if (e.Message.Text == "/get_currencies")
+            if (e.Message.Text == getCurrenciesCommandString)
             {
                 string availableCurrencies = await CurrencyService.GetAvailableCurrencies();
 
@@ -35,10 +46,10 @@ public class BotLogic
                 return;
             }
 
-            if (e.Message.Text == "/start")
+            if (e.Message.Text == startCommandString)
             {
                 await bot.SendTextMessageAsync(chatId: e.Message.Chat,
-                                               text: "Hello! Please send a message in the format: <currency code> <date>. For example: USD 01.01.2022. The command to see a list of all currencies - /get_currencies");
+                                               text: startMessage);
                 return;
             }
 
@@ -52,7 +63,7 @@ public class BotLogic
                 if (!DateTime.TryParseExact(date, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                 {
                     await bot.SendTextMessageAsync(chatId: e.Message.Chat,
-                                                   text: "The date format is incorrect. Correct format is dd.MM.yyyy (e.g., 01.01.2020)");
+                                                   text: dateInvalidMessage);
                     return;
                 }
 
@@ -61,7 +72,7 @@ public class BotLogic
                 if (parsedDate.CompareTo(fourYearsAgo) < 0)
                 {
                     await bot.SendTextMessageAsync(chatId: e.Message.Chat,
-                                                   text: "You can't request a date earlier than 4 years from now.");
+                                                   text: dateInvalidPeriodMessage);
                     return;
                 }
 
@@ -70,7 +81,7 @@ public class BotLogic
                 if (exchangeRate == null)
                 {
                     await bot.SendTextMessageAsync(chatId: e.Message.Chat,
-                                                   text: "No data available for this currency. Please enter a valid currency code. For example: USD.");
+                                                   text: invalidCurrencyCodeMessage);
                 }
                 else if (exchangeRate != null)
                 {
@@ -81,7 +92,7 @@ public class BotLogic
             else
             {
                 await bot.SendTextMessageAsync(chatId: e.Message.Chat,
-                                               text: "Please send a message in the format: <currency code> <date>");
+                                               text: invalidFormatMessage);
             }
         }
     }
@@ -114,8 +125,7 @@ public class BotLogic
         }
         catch (HttpRequestException)
         {
-            return "An error occurred while retrieving the exchange rate. Please try again later.";
+            return exchangeRateAPIFailMessage;
         }
     }
 }
-

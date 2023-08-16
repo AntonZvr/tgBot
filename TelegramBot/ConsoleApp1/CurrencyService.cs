@@ -4,9 +4,12 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
 using ConsoleApp1;
+using ConsoleApp1.Properties;
 
 public class CurrencyService
 {
+    static string availableCurrenciesMessage = Resources.availableCurrenciesMessage;
+    static string apiServiceFailMessage = Resources.apiServiceFailMessage;
     private static readonly HttpClient client = new HttpClient();
 
     public static async Task<string> GetAvailableCurrencies()
@@ -27,7 +30,7 @@ public class CurrencyService
             var availableCurrencies = exchangeRates.Select(r => r.Currency).Distinct();
 
             // Construct response message
-            string message = "Available currencies are:";
+            string message = availableCurrenciesMessage;
             foreach (var currency in availableCurrencies)
             {
                 message += "\n" + currency;
@@ -37,7 +40,7 @@ public class CurrencyService
         }
         catch (HttpRequestException)
         {
-            return "An error occurred while retrieving the available currencies. Please try again later.";
+            return apiServiceFailMessage;
         }
     }
 }
