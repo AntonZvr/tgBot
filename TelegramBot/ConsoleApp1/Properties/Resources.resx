@@ -144,6 +144,9 @@
   <data name="receiveMessage" xml:space="preserve">
     <value>Received a text message in chat {0}.</value>
   </data>
+  <data name="resultFromCacheMessage" xml:space="preserve">
+    <value>from cache</value>
+  </data>
   <data name="resultMessage" xml:space="preserve">
     <value>The exchange rate for {0} on {1} was {2}</value>
   </data>

@@ -18,16 +18,19 @@ public class BotLogic
     private static readonly HttpClient client = new HttpClient();
     private static readonly TelegramBotClient bot = new TelegramBotClient(Configuration.LoadConfiguration().BotToken);
     private CurrencyService currencyService;
+    private CacheService cacheService;
 
     public BotLogic(HttpClient httpClient)
     {
         this.httpClient = httpClient;
         this.currencyService = new CurrencyService(httpClient);
+        this.cacheService = new CacheService();
     }
 
     public BotLogic()
     {
         this.currencyService = new CurrencyService(client);
+        this.cacheService = new CacheService();
     }
 
     public void InitializeBot()

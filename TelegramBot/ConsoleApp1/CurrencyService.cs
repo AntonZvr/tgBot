@@ -7,7 +7,9 @@ public class CurrencyService
     static string availableCurrenciesMessage = Resources.availableCurrenciesMessage;
     static string apiServiceFailMessage = Resources.apiServiceFailMessage;
     static string exchangeRateAPIFailMessage = Resources.exchangeRateAPIFailMessage;
+    static string resultFromCacheMessage = Resources.resultFromCacheMessage;
 
+    private CacheService cacheService = new CacheService();
     private readonly HttpClient _client;
 
     public CurrencyService(HttpClient client)
@@ -45,6 +47,15 @@ public class CurrencyService
 
     public async Task<string> GetExchangeRates(string currencyCode, string date)
     {
+        string key = $"{currencyCode}-{date}";
+        var cacheResult = cacheService.GetFromCache(key);
+
+        if (cacheResult != null)
+        {
+            cacheResult = cacheResult + " " + resultFromCacheMessage;
+            return (string)cacheResult;
+        }
+
         try
         {
             HttpResponseMessage response = await _client.GetAsync($"https://api.privatbank.ua/p24api/exchange_rates?date={date}");
@@ -59,6 +70,7 @@ public class CurrencyService
 
             if (exchangeRate != null)
             {
+                cacheService.AddToCache(key, exchangeRate.SaleRateNB, DateTime.Today.AddDays(1));
                 return exchangeRate.SaleRateNB;
             }
             else
