@@ -1,7 +1,6 @@
 ﻿using System.Globalization;
 using Telegram.Bot;
 using Telegram.Bot.Args;
-using Newtonsoft.Json;
 using ConsoleApp1;
 using ConsoleApp1.Properties;
 
@@ -43,7 +42,8 @@ public class BotLogic
     {
         if (e.Message.Text != null)
         {
-            Console.WriteLine($"Received a text message in chat {e.Message.Chat.Id}.");
+            string recievedMessage = string.Format(Resources.receiveMessage, e.Message.Chat.Id);
+            Console.WriteLine(recievedMessage);
 
             if (e.Message.Text == getCurrenciesCommandString)
             {
@@ -66,7 +66,6 @@ public class BotLogic
                 string currencyCode = messageParts[0].ToUpper();
                 string date = messageParts[1];
 
-                // validate the date format
                 if (!DateTime.TryParseExact(date, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                 {
                     await bot.SendTextMessageAsync(chatId: e.Message.Chat,
@@ -74,7 +73,6 @@ public class BotLogic
                     return;
                 }
 
-                // Check if the date is earlier than 4 years from now
                 var fourYearsAgo = DateTime.Now.AddYears(-4);
                 if (parsedDate.CompareTo(fourYearsAgo) < 0)
                 {
@@ -92,8 +90,9 @@ public class BotLogic
                 }
                 else
                 {
+                    string resultMessage = string.Format(Resources.resultMessage, currencyCode, date, exchangeRate);
                     await bot.SendTextMessageAsync(chatId: e.Message.Chat,
-                                                   text: $"The exchange rate for {currencyCode} on {date} was {exchangeRate}");
+                                                   text: resultMessage);
                 }
             }
             else

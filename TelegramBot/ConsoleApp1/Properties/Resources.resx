@@ -141,6 +141,12 @@
   <data name="invalidFormatMessage" xml:space="preserve">
     <value>Please send a message in the format: &lt;currency code&gt; &lt;date&gt;</value>
   </data>
+  <data name="receiveMessage" xml:space="preserve">
+    <value>Received a text message in chat {0}.</value>
+  </data>
+  <data name="resultMessage" xml:space="preserve">
+    <value>The exchange rate for {0} on {1} was {2}</value>
+  </data>
   <data name="startCommandString" xml:space="preserve">
     <value>/start</value>
   </data>

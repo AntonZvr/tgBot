@@ -23,16 +23,12 @@ public class CurrencyService
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
 
-            // Deserialize JSON response to dynamic object
             dynamic data = JsonConvert.DeserializeObject(responseBody);
 
-            // Deserialize exchangeRate to List<ExchangeRate>
             List<ExchangeRate> exchangeRates = JsonConvert.DeserializeObject<List<ExchangeRate>>(data.exchangeRate.ToString());
 
-            // Get all available currencies with LINQ
             var availableCurrencies = exchangeRates.Select(r => r.Currency).Distinct();
 
-            // Construct response message
             string message = availableCurrenciesMessage;
             foreach (var currency in availableCurrencies)
             {
@@ -55,13 +51,10 @@ public class CurrencyService
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
 
-            // Deserialize JSON response to dynamic object
             dynamic data = JsonConvert.DeserializeObject(responseBody);
 
-            // Deserialize exchangeRate to List<ExchangeRate>
             List<ExchangeRate> exchangeRates = JsonConvert.DeserializeObject<List<ExchangeRate>>(data.exchangeRate.ToString());
 
-            // Get the exchange rate for the specified currency code
             var exchangeRate = exchangeRates.FirstOrDefault(r => r.Currency == currencyCode);
 
             if (exchangeRate != null)

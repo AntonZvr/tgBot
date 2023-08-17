@@ -133,6 +133,24 @@ namespace ConsoleApp1.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Received a text message in chat {0}..
+        /// </summary>
+        internal static string receiveMessage {
+            get {
+                return ResourceManager.GetString("receiveMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The exchange rate for {0} on {1} was {2}.
+        /// </summary>
+        internal static string resultMessage {
+            get {
+                return ResourceManager.GetString("resultMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to /start.
         /// </summary>
         internal static string startCommandString {
